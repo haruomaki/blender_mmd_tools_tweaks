@@ -1,0 +1,2 @@
+def material():
+    print("まてりある")

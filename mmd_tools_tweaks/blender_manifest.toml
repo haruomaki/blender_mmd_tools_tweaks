@@ -3,8 +3,8 @@ schema_version = "1.0.0"
 id = "mmd_tools_tweaks"
 version = "0.0.1"
 name = "MMD Tools Tweaks 🔨"
-tagline = "Utility tools for MMD model editing"
-maintainer = "UuuNyaa <uuunyaa@gmail.com>"
+tagline = "Practical tweaks for mmd_tools workflows"
+maintainer = "Haruomaki <me@haruomaki.jp>"
 type = "add-on"
 
 website = "https://mmd-blender.fandom.com/wiki/MMD_Tools"
@@ -24,13 +24,8 @@ tags = [
 blender_version_min = "4.2.0"
 blender_version_max = "6.0.0"
 
-license = ["SPDX:GPL-3.0-or-later"]
-copyright = [
-    "2025 MMD & Blender Team",
-    "2021-2024 UuuNyaa",
-    "2014-2022 powroupi",
-    "2012-2015 sugiany",
-]
+license = ["MIT License"]
+copyright = ["2026 Haruomaki"]
 
 ## Optional: add-ons can list which resources they will require:
 ## * files (for access of any filesystem operations)

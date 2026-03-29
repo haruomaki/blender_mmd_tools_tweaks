@@ -24,3 +24,13 @@ def print_bones():
     for bone, depth in traverse_bones():
         mmd_bone = bpy.context.object.pose.bones[bone.name].mmd_bone
         print(f"{'  ' * depth}{bone.name} (ID: {mmd_bone.bone_id})")
+
+
+def reindex_bone_ids():
+    """ボーン階層に基づいてボーンID（通し番号）を付与する"""
+    i = 0
+    for bone, depth in traverse_bones():
+        mmd_bone = bpy.context.object.pose.bones[bone.name].mmd_bone
+        mmd_bone.bone_id = i
+        print(f"ID={mmd_bone.bone_id} {bone.name}")
+        i += 1

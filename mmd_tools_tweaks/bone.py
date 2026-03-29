@@ -1,8 +1,14 @@
 import bpy
+from collections.abc import Iterator
 
 
-def traverse_bones(armature):
+def traverse_bones() -> Iterator[tuple[bpy.types.Bone, int]]:
     """ボーンを深さ優先で走査し、(ボーン, 深さ)のジェネレータを返す"""
+    obj = bpy.context.active_object
+    if not obj and obj.type != "ARMATURE":
+        print("[traverse_bones] アーマチュアを選択してください")
+
+    armature = obj.data
     root_bones = [b for b in armature.bones if b.parent is None]
     stack = [(root, 0) for root in reversed(root_bones)]
 
@@ -15,9 +21,6 @@ def traverse_bones(armature):
 
 def print_bones():
     """アクティブなアーマチュアのボーン階層をコンソールに表示"""
-    obj = bpy.context.active_object
-    if not obj and obj.type != "ARMATURE":
-        print("[show_bones] アーマチュアを選択してください")
-
-    for bone, depth in traverse_bones(obj.data):
-        print(f"{'  ' * depth}{bone.name}")
+    for bone, depth in traverse_bones():
+        mmd_bone = bpy.context.object.pose.bones[bone.name].mmd_bone
+        print(f"{'  ' * depth}{bone.name} (ID: {mmd_bone.bone_id})")

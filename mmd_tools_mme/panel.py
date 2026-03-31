@@ -18,7 +18,7 @@ class MME_PT_material_panel(Panel):
             return
 
         mme = mat.mme
-        layout.prop(mme, "effect_path")
+        layout.prop(mme, "role")
 
 
 def register():

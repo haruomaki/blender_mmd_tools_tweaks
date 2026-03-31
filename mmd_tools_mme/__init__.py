@@ -54,8 +54,8 @@ def dump_effects(n=None):
     role_map = read_json()
     char = "◯" if n is None else str(n)
     for i, m in enumerate(traverse_materials()):
-        role = m.mme.effect_path
-        path = role_map.get(role, "")
+        role = m.mme.role
+        path = role_map.get(role, "none")
         print(f"Pmd{char}[{i}] = {path}")
 
 

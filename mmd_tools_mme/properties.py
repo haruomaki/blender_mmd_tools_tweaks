@@ -4,10 +4,9 @@ from bpy.types import PropertyGroup
 
 
 class MMEProperties(PropertyGroup):
-    effect_path: StringProperty(
-        name="Effect",
-        description="Path to .fx file",
-        subtype="FILE_PATH",  # ← これがファイル選択UIになる
+    role: StringProperty(
+        name="Role",
+        description="Shader role (e.g. hair, skin)",
     )  # type: ignore
 
 

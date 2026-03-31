@@ -29,10 +29,34 @@ def traverse_materials():
                 yield m
 
 
+def read_json():
+    import os
+    import json
+
+    # 1. 現在の.blendファイルのディレクトリパスを取得
+    # bpy.path.abspath("//") は現在保存されているファイルの場所を絶対パスで返します
+    blend_dir = bpy.path.abspath("//")
+
+    # 2. jsonファイルのフルパスを作成
+    json_path = os.path.join(blend_dir, "mme.json")
+
+    # 3. ファイルが存在するか確認して読み込む
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        # print("JSONの読み込みに成功しました:", data)
+        return dict(data)
+    else:
+        print("ファイルが見つかりません:", json_path)
+
+
 def dump_effects(n=None):
+    role_map = read_json()
     char = "◯" if n is None else str(n)
     for i, m in enumerate(traverse_materials()):
-        print(f"Pmd{char}[{i}] = {m.mme.effect_path}")
+        role = m.mme.effect_path
+        path = role_map.get(role, "")
+        print(f"Pmd{char}[{i}] = {path}")
 
 
 def register():
@@ -40,6 +64,7 @@ def register():
     panel.register()
     builtins.mme = type("mme", (), {})()
     builtins.mme.trav = traverse_materials
+    builtins.mme.read_json = read_json
     builtins.mme.dump = dump_effects
 
 

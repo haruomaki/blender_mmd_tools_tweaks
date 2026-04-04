@@ -26,11 +26,24 @@ def print_bones():
         print(f"{'  ' * depth}{bone.name} (ID: {mmd_bone.bone_id})")
 
 
+def map_bone_ids(old_to_new: dict[int, int]):
+    """ボーンIDを新たなものに挿げ替える"""
+    for bone in bpy.context.object.pose.bones:
+        # ボーンIDの変更
+        old = bone.mmd_bone.bone_id
+        new = old_to_new[old]
+        bone.mmd_bone.bone_id = new
+
+        # 付与親ボーンIDの変更
+        old = bone.mmd_bone.additional_transform_bone_id
+        new = old_to_new[old]
+        bone.mmd_bone.additional_transform_bone_id = new
+
+
 def reindex_bone_ids():
     """ボーン階層に基づいてボーンID（通し番号）を付与する"""
-    i = 0
-    for bone, depth in traverse_bones():
-        mmd_bone = bpy.context.object.pose.bones[bone.name].mmd_bone
-        mmd_bone.bone_id = i
-        print(f"ID={mmd_bone.bone_id} {bone.name}")
-        i += 1
+    old_to_new = dict()
+    for i, (bone, depth) in enumerate(traverse_bones()):
+        old = bpy.context.object.pose.bones[bone.name].mmd_bone.bone_id
+        old_to_new[old] = i
+    map_bone_ids(old_to_new)

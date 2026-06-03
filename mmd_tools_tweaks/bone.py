@@ -42,7 +42,7 @@ def map_bone_ids(old_to_new: dict[int, int]):
 
 def reindex_bone_ids():
     """ボーン階層に基づいてボーンID（通し番号）を付与する"""
-    old_to_new = dict()
+    old_to_new = {-1: -1}  # ボーンが存在しなかったら写像後もボーン無し
     for i, (bone, depth) in enumerate(traverse_bones()):
         old = bpy.context.object.pose.bones[bone.name].mmd_bone.bone_id
         old_to_new[old] = i

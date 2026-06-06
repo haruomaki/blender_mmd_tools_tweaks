@@ -29,26 +29,6 @@ def darkness():
     print("闇の魔力")
 
 
-def shape_key_info():
-    # アクティブなオブジェクトを取得
-    obj = bpy.context.active_object
-
-    # アクティブなオブジェクトがメッシュであるか確認
-    if obj and obj.type == "MESH":
-        # メッシュのシェイプキーを取得
-        shape_keys = obj.data.shape_keys
-        if shape_keys:
-            # 選択中のシェイプキーの情報を取得
-            selected_shape_key = shape_keys.key_blocks[obj.active_shape_key_index]
-            print("選択中のシェイプキー名:", selected_shape_key.name)
-            print("選択中のシェイプキーのインデックス:", obj.active_shape_key_index)
-            print("選択中のシェイプキーの値:", selected_shape_key.value)
-        else:
-            print("このオブジェクトにはシェイプキーがありません。")
-    else:
-        print("アクティブなオブジェクトがありませんまたはメッシュではありません。")
-
-
 # https://blender.stackexchange.com/a/16528
 def remove_empty_vertex_groups(obj):
     """空の頂点グループを検知して削除する"""

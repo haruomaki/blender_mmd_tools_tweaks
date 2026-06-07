@@ -161,3 +161,34 @@ def select_vertices_moved_from_axis(shapekey_name="", axis="x", tolerance=0.0000
             print(f"  頂点{mv['index']}: ベース={mv['base_pos']:.8f} → ターゲット={mv['target_pos']:.8f} (移動量={mv['delta']:.8f})")
     
     return moved_vertices
+
+
+def vertex_info():
+    obj = bpy.context.active_object
+    if not obj or obj.type != 'MESH':
+        print("アクティブなメッシュオブジェクトがありません")
+        return
+    
+    # 現在のモードを保存
+    current_mode = bpy.context.mode
+    
+    # 編集モードならオブジェクトモードに一時的に切り替え
+    if current_mode == 'EDIT_MESH':
+        bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # 選択された頂点の情報を取得
+    vs = [v.index for v in obj.data.vertices if v.select]
+    
+    if not vs:
+        print("選択された頂点がありません")
+    else:
+        for v in vs:
+            if obj.data.shape_keys and obj.data.shape_keys.reference_key:
+                co = obj.data.shape_keys.reference_key.data[v].co
+                print(f"index={v} ({co.x:.20f} {co.y:.20f} {co.z:.20f})")
+            else:
+                print(f"index={v} シェイプキーが見つかりません")
+    
+    # 元のモードに戻す
+    if current_mode == 'EDIT_MESH':
+        bpy.ops.object.mode_set(mode='EDIT')

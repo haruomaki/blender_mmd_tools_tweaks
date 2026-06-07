@@ -33,6 +33,25 @@ def preserve_selection():
         yield
 
 
+def require_shapekey() -> tuple[bpy.types.Object, bpy.types.Key]:
+    """アクティブなシェイプキーを検証して返す。ダメなら処理を中断する"""
+    obj = bpy.context.active_object
+    if obj is None:
+        raise RuntimeError("アクティブなオブジェクトがありません。")
+
+    if obj.type != "MESH":
+        raise RuntimeError("アクティブオブジェクトはメッシュではありません。")
+
+    if not hasattr(obj.data, "shape_keys") or not obj.data.shape_keys:
+        raise RuntimeError("シェイプキーが見つかりません。")
+
+    active_key = obj.active_shape_key
+    if not active_key:
+        raise RuntimeError("アクティブなシェイプキーがありません。")
+
+    return obj, active_key
+
+
 def shape_key_info():
     """
     現在選択中のシェイプキーについて以下を表示する。
@@ -43,45 +62,22 @@ def shape_key_info():
     - 変形している頂点数
     - 変形していない頂点数
 
-    判定は Basis(ベース)との差分距離で行う。
+    判定はリファレンスシェイプキーとの差分距離で行う。
     """
 
     # ------------------------------------------------------------------
-    # アクティブオブジェクト取得
+    # アクティブオブジェクト・シェイプキー取得
     # ------------------------------------------------------------------
-    obj = bpy.context.active_object
-
-    if obj is None:
-        print("アクティブなオブジェクトがありません。")
-        return
-
-    if obj.type != "MESH":
-        print("アクティブオブジェクトはメッシュではありません。")
-        return
-
-    # ------------------------------------------------------------------
-    # シェイプキー取得
-    # ------------------------------------------------------------------
+    obj, active_key = require_shapekey()
     shape_keys = obj.data.shape_keys
-
-    if shape_keys is None:
-        print("このオブジェクトにはシェイプキーがありません。")
-        return
-
-    # ------------------------------------------------------------------
-    # 選択中シェイプキー取得
-    # ------------------------------------------------------------------
     active_index = obj.active_shape_key_index
-    active_key = shape_keys.key_blocks[active_index]
 
     print(f"==== {active_index}番目のシェイプキー ====")
     print("名前          :", active_key.name)
     print("値            :", active_key.value)
 
-    # Basisキー取得
-    # 日本語環境では「ベース」になっていることもあるが、
-    # Blender内部的には通常先頭がBasisなのでそれを利用する。
-    basis_key = shape_keys.key_blocks[0]
+    # リファレンスキー取得
+    ref_key = shape_keys.reference_key
 
     # ------------------------------------------------------------------
     # 頂点変化量を集計
@@ -91,8 +87,8 @@ def shape_key_info():
     moved = []
     not_moved = []
 
-    for i, (basis_vert, key_vert) in enumerate(zip(basis_key.data, active_key.data)):
-        distance = (key_vert.co - basis_vert.co).length
+    for i, (ref_vert, key_vert) in enumerate(zip(ref_key.data, active_key.data)):
+        distance = (key_vert.co - ref_vert.co).length
 
         if distance > eps:
             moved.append(i)
@@ -106,7 +102,7 @@ def shape_key_info():
     print(f"移動する頂点数: {len(moved)}")
 
 
-def select_vertices_moved_from_axis(shapekey_name="", axis="x", tolerance=0.000001):
+def select_vertices_moved_from_axis(axis="x", tolerance=0.000001):
     """
     ベースシェイプでは軸上(例: |x| < tolerance)にあったが、
     指定シェイプキーでは軸上から外れてしまった頂点を選択する。
@@ -115,39 +111,15 @@ def select_vertices_moved_from_axis(shapekey_name="", axis="x", tolerance=0.0000
     指定シェイプキーでは軸上へと動いた頂点も選択する。
 
     Args:
-        shapekey_name: チェックするシェイプキー名（空文字ならアクティブなシェイプキー）
+        shapekey_name: チェックするシェイプキー名（空文字ならアクティブなシェイプキー）※廃止中
         axis: チェックする軸 ("x", "y", "z")
         tolerance: 軸上とみなす許容範囲
     """
-    obj = bpy.context.active_object
-    if not obj or obj.type != "MESH":
-        print("アクティブなメッシュオブジェクトがありません")
-        return
-
-    # シェイプキーの存在チェック
-    if not obj.data.shape_keys:
-        print("シェイプキーがありません")
-        return
+    obj, target = require_shapekey()
+    print(f"アクティブなシェイプキー: {target.name}")
 
     # ベースシェイプ（相対キーの基準）
     basis = obj.data.shape_keys.reference_key
-
-    # 対象シェイプキーを決定
-    if shapekey_name:
-        target = obj.data.shape_keys.key_blocks.get(shapekey_name)
-        if not target:
-            print(f"シェイプキー '{shapekey_name}' が見つかりません")
-            return
-    else:
-        # アクティブなシェイプキーを取得（シェイプキー編集モードで選択中のもの）
-        if obj.active_shape_key:
-            target = obj.active_shape_key
-            print(f"アクティブなシェイプキー: {target.name}")
-        else:
-            print(
-                "アクティブなシェイプキーがありません（シェイプキー編集モードになっていますか？）"
-            )
-            return
 
     axis_map = {"x": 0, "X": 0, "y": 1, "Y": 1, "z": 2, "Z": 2}
     axis_idx = axis_map.get(axis, 0)
@@ -201,19 +173,7 @@ def select_vertices_moved_from_axis(shapekey_name="", axis="x", tolerance=0.0000
 
 def vertex_info():
     """現在アクティブなシェイプキーの選択頂点の座標を表示"""
-    obj = bpy.context.active_object
-    if not obj or obj.type != "MESH":
-        print("アクティブなメッシュオブジェクトがありません")
-        return
-
-    if not obj.data.shape_keys:
-        print("シェイプキーが見つかりません")
-        return
-
-    active_key = obj.active_shape_key
-    if not active_key:
-        print("アクティブなシェイプキーがありません（シェイプキーを選択してください）")
-        return
+    obj, active_key = require_shapekey()
 
     with temp_object_mode():
         vs = [v.index for v in obj.data.vertices if v.select]
@@ -230,20 +190,7 @@ def vertex_info():
 
 def set_selected_vertices_axis_to_value(axis="x", value=0.0):
     """選択された頂点の指定された軸の座標を任意の値に設定する（アクティブなシェイプキーに対して）"""
-    obj = bpy.context.active_object
-    if not obj or obj.type != "MESH":
-        print("アクティブなメッシュオブジェクトがありません")
-        return
-
-    if not obj.data.shape_keys:
-        print("シェイプキーが見つかりません")
-        return
-
-    # アクティブなシェイプキーを取得
-    active_key = obj.active_shape_key
-    if not active_key:
-        print("アクティブなシェイプキーがありません（シェイプキーを選択してください）")
-        return
+    obj, active_key = require_shapekey()
 
     axis_map = {"x": 0, "y": 1, "z": 2}
     axis_idx = axis_map.get(axis.lower())

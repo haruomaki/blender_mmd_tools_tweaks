@@ -1,6 +1,8 @@
 import bpy
 from collections.abc import Iterator
 
+from .mmd import get_mmd_root
+
 
 def traverse_bones() -> Iterator[tuple[bpy.types.Bone, int]]:
     """ボーンを深さ優先で走査し、(ボーン, 深さ)のジェネレータを返す"""
@@ -28,16 +30,24 @@ def print_bones():
 
 def map_bone_ids(old_to_new: dict[int, int]):
     """ボーンIDを新たなものに挿げ替える"""
+    # ボーン本体と付与親ボーンのIDを変更
     for bone in bpy.context.object.pose.bones:
+        mmd_bone = bone.mmd_bone
+
         # ボーンIDの変更
-        old = bone.mmd_bone.bone_id
-        new = old_to_new[old]
-        bone.mmd_bone.bone_id = new
+        old = mmd_bone.bone_id
+        mmd_bone.bone_id = old_to_new[old]
 
         # 付与親ボーンIDの変更
-        old = bone.mmd_bone.additional_transform_bone_id
-        new = old_to_new[old]
-        bone.mmd_bone.additional_transform_bone_id = new
+        old = mmd_bone.additional_transform_bone_id
+        mmd_bone.additional_transform_bone_id = old_to_new[old]
+
+    # ボーンモーフが参照しているボーンIDを変更
+    # for d in tw.get_mmd_root().mmd_root.bone_morphs[0].data: d.id_data
+    for morph in get_mmd_root().mmd_root.bone_morphs:
+        for data in morph.data:
+            old = data.bone_id
+            data.bone_id = old_to_new[old]
 
 
 def reindex_bone_ids():
@@ -46,4 +56,5 @@ def reindex_bone_ids():
     for i, (bone, depth) in enumerate(traverse_bones()):
         old = bpy.context.object.pose.bones[bone.name].mmd_bone.bone_id
         old_to_new[old] = i
+        print(f"{old:3} -> {i:3}  {bone.name}")
     map_bone_ids(old_to_new)

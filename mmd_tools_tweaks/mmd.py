@@ -1,14 +1,15 @@
 import bpy
 
 
-def get_mmd_root() -> bpy.types.Object | None:
+def get_mmd_root(target: bpy.types.Object | None = None) -> bpy.types.Object | None:
     """選択したオブジェクトが含まれるMMD物体のルートを返す"""
-    obj = bpy.context.active_object
-    while obj != None:
-        if obj.mmd_type == "ROOT":
-            return obj
+    obj = target or bpy.context.active_object
+    while obj is not None and obj.mmd_type != "ROOT":
         obj = obj.parent
-    return None
+    return obj
+    # ↓ mmd_toolsの内部関数を使えばこう書けるが、インポートができないため諦めた
+    # def get_mmd_root(target: bpy.types.Object | None = None) -> bpy.types.Object | None:
+    #     return Model.findRoot(target if target else bpy.context.active_object)
 
 
 def rename_mesh():
